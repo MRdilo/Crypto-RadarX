@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 const dict = {
-  ar: { market: 'الأسواق', news: 'الأخبار', signals: 'التوصيات', search: 'ابحث عن عملة...', logout: 'خروج', login: 'تسجيل الدخول', loading: 'جاري الاتصال...', buy: 'شراء قوي', sell: 'بيع بخسارة', fng: 'مؤشر الخوف والطمع' },
-  en: { market: 'Market', news: 'News', signals: 'Signals', search: 'Search...', logout: 'Logout', login: 'Login', loading: 'Loading...', buy: 'Strong Buy', sell: 'Sell', fng: 'Fear & Greed Index' }
+  ar: { market: 'الأسواق', news: 'أخبار الاستثمار', signals: 'توصيات RadarX', search: 'ابحث عن عملة...', logout: 'خروج', login: 'دخول', loading: 'جاري جلب البيانات...', buy: 'شراء قوي', sell: 'بيع بخسارة', hold: 'مراقبة', fng: 'مؤشر الجشع والخوف' },
+  en: { market: 'Markets', news: 'Investing News', signals: 'RadarX Signals', search: 'Search coins...', logout: 'Logout', login: 'Login', loading: 'Fetching data...', buy: 'Strong Buy', sell: 'Sell', hold: 'Hold', fng: 'Fear & Greed Index' }
 };
 
 const MiniChart = ({ data, isUp }) => {
@@ -15,7 +15,7 @@ const MiniChart = ({ data, isUp }) => {
     const y = max === min ? height / 2 : height - ((price - min) / (max - min)) * height;
     return `${x},${y}`;
   }).join(' ');
-  return <svg width={width} height={height} style={{ margin: '0 10px', overflow: 'visible' }}><polyline points={points} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg width={width} height={height} style={{ margin: '0 10px' }}><polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 };
 
 export default function App() {
@@ -41,19 +41,26 @@ export default function App() {
   useEffect(() => {
     if (isLoggedIn) {
       setLoading(true);
-      Promise.all([
-        fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=true').then(r => r.json()),
-        fetch('https://api.alternative.me/fng/').then(r => r.json())
-      ]).then(([coinData, fngData]) => {
-        setCoins(coinData);
-        setFng({ value: fngData.data[0].value, label: fngData.data[0].value_classification });
-        setLoading(false);
-      }).catch(() => setLoading(false));
-      
+      if (activeTab === 'market') {
+        // جلب أفضل 100 عملة بدلاً من 20
+        Promise.all([
+          fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=true').then(r => r.json()),
+          fetch('https://api.alternative.me/fng/').then(r => r.json())
+        ]).then(([coinData, fngData]) => {
+          setCoins(coinData);
+          setFng({ value: fngData.data[0].value, label: fngData.data[0].value_classification });
+          setLoading(false);
+        }).catch(() => setLoading(false));
+      }
+
       if (activeTab === 'news') {
-        fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN')
+        // جلب الأخبار العالمية القوية
+        fetch(`https://min-api.cryptocompare.com/data/v2/news/?lang=EN`)
           .then(res => res.json())
-          .then(data => setNews(data.Data.slice(0, 15)));
+          .then(data => {
+            setNews(data.Data.slice(0, 25));
+            setLoading(false);
+          });
       }
     }
   }, [isLoggedIn, activeTab]);
@@ -85,10 +92,7 @@ export default function App() {
         {activeTab === 'market' && (
           <>
             <div className="fng-card">
-              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}>
-                <span>{t.fng}</span>
-                <b style={{color: fng.value > 50 ? '#10b981' : '#ef4444'}}>{fng.label}</b>
-              </div>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}><span>{t.fng}</span><b style={{color: fng.value > 50 ? '#10b981' : '#ef4444'}}>{fng.label}</b></div>
               <div className="fng-bar-bg"><div className="fng-bar-fill" style={{width: `${fng.value}%`, backgroundColor: fng.value > 50 ? '#10b981' : '#ef4444'}}></div></div>
               <center style={{marginTop:'8px', fontSize:'14px'}}>{fng.value} / 100</center>
             </div>
@@ -103,14 +107,44 @@ export default function App() {
             ))}
           </>
         )}
+
+        {activeTab === 'news' && (
+          <div style={{padding: '10px'}}>
+            <h3 style={{padding:'0 10px', fontSize:'16px', color:'#818cf8'}}>🔥 أهم أخبار الأسواق</h3>
+            {loading ? <p style={{textAlign:'center'}}>{t.loading}</p> : news.map((item, i) => (
+              <div key={i} className="coin-row" style={{flexDirection:'column', alignItems:'flex-start', gap:'12px'}}>
+                <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                   <img src={item.imageurl} style={{width:'65px', height:'65px', borderRadius:'10px', objectFit:'cover'}} alt="news" />
+                   <div>
+                      <h4 style={{margin:0, fontSize:'14px', lineHeight:'1.4'}}>{item.title.substring(0, 80)}...</h4>
+                      <small style={{color:'#64748b'}}>{item.source_info.name} • {new Date(item.published_on * 1000).toLocaleDateString()}</small>
+                   </div>
+                </div>
+                <a href={item.url} target="_blank" rel="noreferrer" style={{alignSelf:'flex-end', background:'#1e293b', color:'#818cf8', padding:'5px 12px', borderRadius:'5px', fontSize:'11px', textDecoration:'none'}}>اقرأ المزيد ↗️</a>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'signals' && (
+          <div style={{padding: '10px'}}>
+            <div className="coin-row" style={{borderLeft:'4px solid #10b981'}}>
+              <div><b>BTC/USDT</b><br/><small style={{color:'#64748b'}}>RadarX Engine • 4H</small></div>
+              <div style={{textAlign:'right'}}><span style={{color:'#10b981', fontWeight:'bold'}}>{t.buy}</span><br/><small>$67,100</small></div>
+            </div>
+            <div className="coin-row" style={{borderLeft:'4px solid #ef4444'}}>
+              <div><b>SOL/USDT</b><br/><small style={{color:'#64748b'}}>RadarX Engine • 1H</small></div>
+              <div style={{textAlign:'right'}}><span style={{color:'#ef4444', fontWeight:'bold'}}>{t.sell}</span><br/><small>$158.2</small></div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bottom-nav">
-        <div className={`nav-item ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>🎯 {t.signals}</div>
-        <div className={`nav-item ${activeTab === 'news' ? 'active' : ''}`} onClick={() => setActiveTab('news')}>📰 {t.news}</div>
-        <div className={`nav-item ${activeTab === 'market' ? 'active' : ''}`} onClick={() => setActiveTab('market')}>📈 {t.market}</div>
+        <div className={`nav-item ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>🎯 <div>{t.signals}</div></div>
+        <div className={`nav-item ${activeTab === 'news' ? 'active' : ''}`} onClick={() => setActiveTab('news')}>📰 <div>{t.news}</div></div>
+        <div className={`nav-item ${activeTab === 'market' ? 'active' : ''}`} onClick={() => setActiveTab('market')}>📈 <div>{t.market}</div></div>
       </div>
     </div>
   );
-      }
-                                                                                                                                   
+        }
