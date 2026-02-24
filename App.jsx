@@ -62,7 +62,7 @@ export default function App() {
     return (
       <div className="app-body login-container" style={{fontFamily: isAr ? 'Cairo' : 'Poppins'}} dir={isAr ? 'rtl' : 'ltr'}>
         <div className="logo-text">RADARX</div>
-        <p style={{color:'#64748b', marginBottom: '30px'}}>Crypto Intelligence by MR5</p>
+        <p style={{color:'#64748b', marginBottom: '30px'}}>Crypto Intelligence</p>
         <button className="login-btn" onClick={() => setIsLoggedIn(true)}>{t.login}</button>
       </div>
     );
@@ -72,7 +72,7 @@ export default function App() {
     <div className="app-body" style={{fontFamily: isAr ? 'Cairo' : 'Poppins'}} dir={isAr ? 'rtl' : 'ltr'}>
       <div className="top-bar">
         <div className="profile-section">
-          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${username}&backgroundColor=1e293b`} className="avatar" alt="User Avatar" />
+          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${username}&backgroundColor=1e293b`} className="avatar" alt="User" />
           <input className="username-input" value={username} onChange={e => setUsername(e.target.value)} />
         </div>
         <div style={{display:'flex', gap:'10px'}}>
@@ -85,47 +85,23 @@ export default function App() {
         {activeTab === 'market' && (
           <>
             <div className="fng-card">
-              <div style={{display:'flex', justifyBetween:'space-between', marginBottom:'10px'}}>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}>
                 <span>{t.fng}</span>
                 <b style={{color: fng.value > 50 ? '#10b981' : '#ef4444'}}>{fng.label}</b>
               </div>
               <div className="fng-bar-bg"><div className="fng-bar-fill" style={{width: `${fng.value}%`, backgroundColor: fng.value > 50 ? '#10b981' : '#ef4444'}}></div></div>
               <center style={{marginTop:'8px', fontSize:'14px'}}>{fng.value} / 100</center>
             </div>
-
-            <div className="search-container">
-              <input type="text" className="input-field" placeholder={t.search} onChange={e => setSearchQuery(e.target.value)} />
-            </div>
-
+            <div className="search-container"><input type="text" className="input-field" placeholder={t.search} onChange={e => setSearchQuery(e.target.value)} /></div>
             {loading ? <p style={{textAlign:'center', marginTop:'20px'}}>{t.loading}</p> : 
               coins.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(coin => (
               <div key={coin.id} className="coin-row">
-                <div style={{display:'flex', alignItems:'center', width:'35%'}}>
-                  <img src={coin.image} className="coin-icon" alt={coin.name} />
-                  <b>{coin.symbol.toUpperCase()}</b>
-                </div>
-                <div style={{width:'30%', display:'flex', justifyContent:'center'}}>
-                  <MiniChart data={coin.sparkline_in_7d?.price} isUp={coin.price_change_percentage_24h > 0} />
-                </div>
-                <div style={{textAlign: isAr ? 'left' : 'right', width:'35%'}}>
-                  <b>${coin.current_price.toLocaleString()}</b>
-                  <div className={coin.price_change_percentage_24h > 0 ? 'price-up' : 'price-down'}>
-                    {coin.price_change_percentage_24h?.toFixed(2)}%
-                  </div>
-                </div>
+                <div style={{display:'flex', alignItems:'center', width:'35%'}}><img src={coin.image} className="coin-icon" alt={coin.name} /><b>{coin.symbol.toUpperCase()}</b></div>
+                <div style={{width:'30%', display:'flex', justifyContent:'center'}}><MiniChart data={coin.sparkline_in_7d?.price} isUp={coin.price_change_percentage_24h > 0} /></div>
+                <div style={{textAlign: isAr ? 'left' : 'right', width:'35%'}}><b>${coin.current_price.toLocaleString()}</b><div className={coin.price_change_percentage_24h > 0 ? 'price-up' : 'price-down'}>{coin.price_change_percentage_24h?.toFixed(2)}%</div></div>
               </div>
             ))}
           </>
-        )}
-        {activeTab === 'news' && (
-          <div style={{padding: '10px'}}>
-            {news.map((item, i) => (
-              <div key={i} className="coin-row" style={{flexDirection:'column', alignItems:'flex-start'}}>
-                <h4 style={{margin:'0 0 10px 0'}}>{item.title}</h4>
-                <a href={item.url} target="_blank" rel="noreferrer" style={{color:'#818cf8', fontSize:'12px'}}>Read More</a>
-              </div>
-            ))}
-          </div>
         )}
       </div>
 
@@ -136,4 +112,5 @@ export default function App() {
       </div>
     </div>
   );
-  }
+      }
+                                                                                                                                   
