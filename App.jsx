@@ -42,7 +42,6 @@ export default function App() {
     if (isLoggedIn) {
       setLoading(true);
       if (activeTab === 'market') {
-        // جلب أفضل 100 عملة بدلاً من 20
         Promise.all([
           fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=true').then(r => r.json()),
           fetch('https://api.alternative.me/fng/').then(r => r.json())
@@ -54,7 +53,6 @@ export default function App() {
       }
 
       if (activeTab === 'news') {
-        // جلب الأخبار العالمية القوية
         fetch(`https://min-api.cryptocompare.com/data/v2/news/?lang=EN`)
           .then(res => res.json())
           .then(data => {
@@ -136,6 +134,18 @@ export default function App() {
               <div><b>SOL/USDT</b><br/><small style={{color:'#64748b'}}>RadarX Engine • 1H</small></div>
               <div style={{textAlign:'right'}}><span style={{color:'#ef4444', fontWeight:'bold'}}>{t.sell}</span><br/><small>$158.2</small></div>
             </div>
+            <div className="coin-row" style={{borderLeft:'4px solid #f59e0b'}}>
+              <div><b>ETH/USDT</b><br/><small style={{color:'#64748b'}}>RadarX Engine • 1D</small></div>
+              <div style={{textAlign:'right'}}><span style={{color:'#f59e0b', fontWeight:'bold'}}>{t.hold}</span><br/><small>$3,450</small></div>
+            </div>
+            <div className="coin-row" style={{borderLeft:'4px solid #10b981'}}>
+              <div><b>ADA/USDT</b><br/><small style={{color:'#64748b'}}>RadarX Engine • 4H</small></div>
+              <div style={{textAlign:'right'}}><span style={{color:'#10b981', fontWeight:'bold'}}>{t.buy}</span><br/><small>$0.58</small></div>
+            </div>
+            <div className="coin-row" style={{borderLeft:'4px solid #ef4444'}}>
+              <div><b>DOT/USDT</b><br/><small style={{color:'#64748b'}}>RadarX Engine • 1H</small></div>
+              <div style={{textAlign:'right'}}><span style={{color:'#ef4444', fontWeight:'bold'}}>{t.sell}</span><br/><small>$8.45</small></div>
+            </div>
           </div>
         )}
       </div>
@@ -147,4 +157,4 @@ export default function App() {
       </div>
     </div>
   );
-        }
+                                                                                                                       }
