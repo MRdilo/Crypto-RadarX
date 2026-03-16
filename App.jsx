@@ -34,23 +34,23 @@ const translations = {
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const[loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [coins, setCoins] = useState([]);
-  const[filteredCoins, setFilteredCoins] = useState([]);
+  const [filteredCoins, setFilteredCoins] = useState([]);
   const [news, setNews] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [lang, setLang] = useState('ar');
   const [searchQuery, setSearchQuery] = useState('');
-  const [error, setError] = useState(false);
+  const[error, setError] = useState(false);
   
   // States for New Features
   const [activeTab, setActiveTab] = useState('market'); // market, watchlist, news
   const [watchlist, setWatchlist] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const[modalVisible, setModalVisible] = useState(false);
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const[password, setPassword] = useState('');
 
   const t = translations[lang];
   const isAr = lang === 'ar';
@@ -75,7 +75,7 @@ export default function App() {
       const lower = searchQuery.toLowerCase();
       setFilteredCoins(source.filter(c => c.name.toLowerCase().includes(lower) || c.symbol.toLowerCase().includes(lower)));
     }
-  }, [searchQuery, coins, activeTab, watchlist]);
+  },[searchQuery, coins, activeTab, watchlist]);
 
   const loadWatchlist = async () => {
     try {
@@ -85,7 +85,7 @@ export default function App() {
   };
 
   const toggleWatchlist = async (coinId) => {
-    let updated = [...watchlist];
+    let updated =[...watchlist];
     if (updated.includes(coinId)) {
       updated = updated.filter(id => id !== coinId);
     } else {
@@ -112,7 +112,7 @@ export default function App() {
 
   const fetchNews = async () => {
     try {
-      // استخدام API مستقر ومجاني للأخبار (CryptoCompare)
+      // API للأخبار
       const res = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
       const data = await res.json();
       if (data && data.Data) setNews(data.Data.slice(0, 20));
@@ -126,7 +126,9 @@ export default function App() {
 
   const openUrl = (url) => {
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
-  };const renderCoinItem = ({ item }) => {
+  };
+
+  const renderCoinItem = ({ item }) => {
     const isPositive = item.price_change_percentage_24h > 0;
     const isFav = watchlist.includes(item.id);
 
@@ -210,7 +212,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      {/* Search Bar (Hide in News Tab) */}
+      {/* Search Bar */}
       {activeTab !== 'news' && (
         <View style={styles.searchWrapper}>
           <View style={[styles.searchContainer, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
@@ -251,7 +253,7 @@ export default function App() {
               {selectedCoin.sparkline_in_7d && (
                 <View style={{ alignItems: 'center', marginVertical: 20 }}>
                   <LineChart
-                    data={{ labels: [], datasets: [{ data: selectedCoin.sparkline_in_7d.price }] }}
+                    data={{ labels: [], datasets:[{ data: selectedCoin.sparkline_in_7d.price }] }}
                     width={width - 40} height={180} withDots={false} withInnerLines={false} withOuterLines={false}
                     chartConfig={{
                       backgroundColor: '#0f172a', backgroundGradientFrom: '#0f172a', backgroundGradientTo: '#0f172a',
@@ -273,7 +275,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#020617' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  
   loginContainer: { flex: 1, backgroundColor: '#020617', justifyContent: 'center', alignItems: 'center', padding: 20 },
   loginCard: { width: '100%', maxWidth: 400, alignItems: 'center', padding: 30, borderRadius: 25, backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#1e293b' },
   brandName: { fontSize: 32, fontWeight: '900', color: '#fff', marginBottom: 5 },
@@ -281,21 +282,17 @@ const styles = StyleSheet.create({
   input: { width: '100%', height: 50, backgroundColor: '#1e293b', borderRadius: 12, color: '#fff', paddingHorizontal: 15, marginBottom: 15, borderWidth: 1, borderColor: '#334155' },
   mainBtn: { width: '100%', height: 50, backgroundColor: '#6366f1', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   mainBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  
   header: { padding: 20, justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0f172a', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 20 },
   headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#fff' },
   logoutBtn: { padding: 8, backgroundColor: '#ef444415', borderRadius: 10 },
-  
   tabContainer: { flexDirection: 'row', backgroundColor: '#0f172a', paddingHorizontal: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 12 },
   activeTab: { backgroundColor: '#1e293b' },
   tabText: { color: '#64748b', fontWeight: 'bold', marginHorizontal: 6 },
   activeTabText: { color: '#6366f1' },
-
   searchWrapper: { padding: 16 },
   searchContainer: { height: 45, backgroundColor: '#0f172a', borderRadius: 12, alignItems: 'center', paddingHorizontal: 15, borderWidth: 1, borderColor: '#1e293b' },
   searchInput: { flex: 1, color: '#fff', fontSize: 15, marginHorizontal: 10 },
-  
   coinCard: { backgroundColor: '#0f172a', padding: 15, borderRadius: 16, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: '#1e293b' },
   coinIcon: { width: 40, height: 40, borderRadius: 20 },
   coinInfo: { flex: 1, marginHorizontal: 12 },
@@ -304,15 +301,13 @@ const styles = StyleSheet.create({
   coinPriceInfo: { justifyContent: 'center', marginRight: 10 },
   coinPrice: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   favBtn: { padding: 5 },
-
   newsCard: { backgroundColor: '#0f172a', borderRadius: 16, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: '#1e293b' },
-  newsImg: { width: '100%', height: 160, backgroundColor: '#1e293b' },
-  newsContent: { padding: 15 },
+  newsImg: { width: '100%', height: 160, backgroundColor: '#1e293b' },newsContent: { padding: 15 },
   newsTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', lineHeight: 22 },
   newsSource: { color: '#64748b', fontSize: 12, marginTop: 8 },
   readMore: { color: '#6366f1', fontSize: 13, fontWeight: 'bold', marginTop: 10 },
-
   modalContainer: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.8)' },
   modalContent: { backgroundColor: '#0f172a', padding: 25, borderTopLeftRadius: 30, borderTopRightRadius: 30, minHeight: '60%', borderWidth: 1, borderColor: '#1e293b' },
   modalHeader: { justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }
 });
+             
