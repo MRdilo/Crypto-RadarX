@@ -20,26 +20,35 @@ const translations = {
   }
 };
 
-// بيانات أخبار احتياطية تظهر في حال توقف الـ API أو حظره لضمان عدم بقاء الشاشة فارغة
+// مكتبة أخبار احتياطية موسعة بصور مضمونة
 const fallbackNews =[
-  { title: "البيتكوين يكسر حواجز جديدة وسط تفاؤل المستثمرين بصناديق ETF", source_info: { name: "CryptoArab News" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
-  { title: "Ethereum Foundation announces new upcoming scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" },
+  { title: "البيتكوين يكسر حواجز جديدة وسط تفاؤل المستثمرين بصناديق ETF", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
+  { title: "Ethereum Foundation announces new scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" },
   { title: "الذكاء الاصطناعي يقتحم عالم التداول الرقمي بقوة هذا العام", source_info: { name: "AI Tech Daily" }, url: "https://decrypt.co", imageurl: "https://images.unsplash.com/photo-1639762681485-074b7f4ec651?auto=format&fit=crop&w=600&q=80" },
-  { title: "Solana network reaches all-time high in daily active users", source_info: { name: "Web3 Times" }, url: "https://blockworks.co", imageurl: "https://images.unsplash.com/photo-1641580529558-a96d473b6f00?auto=format&fit=crop&w=600&q=80" }
+  { title: "Solana network reaches all-time high in daily active users", source_info: { name: "Web3 Times" }, url: "https://blockworks.co", imageurl: "https://images.unsplash.com/photo-1641580529558-a96d473b6f00?auto=format&fit=crop&w=600&q=80" },
+  { title: "هل نشهد نهاية السوق الهابط قريباً؟ محللون يجيبون", source_info: { name: "Trading MENA" }, url: "https://ar.cointelegraph.com/", imageurl: "https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=600&q=80" },
+  { title: "Binance continues to expand despite regulatory challenges", source_info: { name: "Crypto News" }, url: "https://binance.com", imageurl: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80" }
 ];
 
+// صورة احتياطية في حال كانت صورة الخبر مكسورة
+const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80";
+
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [coins, setCoins] = useState([]);
-  const [filteredCoins, setFilteredCoins] = useState([]);
-  const [news, setNews] = useState([]);
-  const [lang, setLang] = useState('ar');
-  const[searchQuery, setSearchQuery] = useState('');
+  // استخدام localStorage لحفظ حالة تسجيل الدخول
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('radarx_logged_in') === 'true';
+  });
   
-  const [activeTab, setActiveTab] = useState('market');
+  const[loading, setLoading] = useState(false);
+  const [coins, setCoins] = useState([]);
+  const[filteredCoins, setFilteredCoins] = useState([]);
+  const [news, setNews] = useState([]);
+  const[lang, setLang] = useState('ar');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const[activeTab, setActiveTab] = useState('market');
   const [watchlist, setWatchlist] = useState([]);
-  const [selectedCoin, setSelectedCoin] = useState(null);
+  const[selectedCoin, setSelectedCoin] = useState(null);
 
   const t = translations[lang];
   const isAr = lang === 'ar';
@@ -82,13 +91,13 @@ export default function App() {
       const res = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
       const data = await res.json();
       if (data?.Data && data.Data.length > 0) {
-        setNews(data.Data.slice(0, 15));
+        setNews(data.Data.slice(0, 20));
       } else {
-        setNews(fallbackNews); // إذا كان الـ API فارغاً
+        setNews(fallbackNews);
       }
     } catch (err) { 
-      console.error("News API Blocked by CORS/Adblock:", err); 
-      setNews(fallbackNews); // تشغيل بيانات الطوارئ
+      console.error("News API Blocked:", err); 
+      setNews(fallbackNews);
     }
   };
 
@@ -97,7 +106,28 @@ export default function App() {
     let updated = watchlist.includes(coinId) ? watchlist.filter(id => id !== coinId) : [...watchlist, coinId];
     setWatchlist(updated);
     localStorage.setItem('radarx_watchlist', JSON.stringify(updated));
-  };// شاشة تسجيل الدخول المحدثة (بدون حقول، زر وشعار فقط)
+  };
+
+  // دوال تسجيل الدخول والخروج مع الحفظ في المتصفح
+  const handleLogin = () => {
+    localStorage.setItem('radarx_logged_in', 'true');
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('radarx_logged_in');
+    setIsLoggedIn(false);
+  };// حساب توصيات الذكاء الاصطناعي
+  const getAISignals = (coin) => {
+    if(!coin) return null;
+    const isBullish = coin.price_change_percentage_24h > 0;
+    const volatility = Math.abs(coin.price_change_percentage_24h || 2);
+    const price = coin.current_price;
+    const tp = isBullish ? price * (1 + (volatility * 1.5 / 100)) : price * (1 - (volatility * 1.5 / 100));
+    const sl = isBullish ? price * (1 - (volatility * 0.8 / 100)) : price * (1 + (volatility * 0.8 / 100));
+    return { isBullish, entry: price, tp, sl };
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="login-container" style={{ direction: dir, background: '#020617' }}>
@@ -109,7 +139,7 @@ export default function App() {
           <p style={{ color: '#94a3b8', marginBottom: 50, fontSize: 18 }}>{t.loginDesc}</p>
           
           <button 
-            onClick={() => setIsLoggedIn(true)}
+            onClick={handleLogin}
             style={{ width: '100%', padding: '18px', borderRadius: '50px', background: '#39FF14', color: '#000', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 25px rgba(57, 255, 20, 0.3)', transition: 'transform 0.2s', fontFamily: 'Tajawal' }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
             onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -125,17 +155,6 @@ export default function App() {
     );
   }
 
-  // حساب توصيات الذكاء الاصطناعي (يتم حسابها ديناميكياً)
-  const getAISignals = (coin) => {
-    if(!coin) return null;
-    const isBullish = coin.price_change_percentage_24h > 0;
-    const volatility = Math.abs(coin.price_change_percentage_24h || 2);
-    const price = coin.current_price;
-    const tp = isBullish ? price * (1 + (volatility * 1.5 / 100)) : price * (1 - (volatility * 1.5 / 100));
-    const sl = isBullish ? price * (1 - (volatility * 0.8 / 100)) : price * (1 + (volatility * 0.8 / 100));
-    return { isBullish, entry: price, tp, sl };
-  };
-
   return (
     <div className="app-container" style={{ direction: dir }}>
       <div className="header">
@@ -143,7 +162,7 @@ export default function App() {
           <Radar size={28} color="#39FF14" />
           <h2 style={{ margin: 0, fontWeight: 900 }}>{t.title}</h2>
         </div>
-        <LogOut size={24} color="#ef4444" style={{ cursor: 'pointer' }} onClick={() => setIsLoggedIn(false)} />
+        <LogOut size={24} color="#ef4444" style={{ cursor: 'pointer' }} onClick={handleLogout} />
       </div>
 
       <div className="tabs">
@@ -167,7 +186,13 @@ export default function App() {
         ) : activeTab === 'news' ? (
           news.map((n, i) => (
             <a key={i} href={n.url} target="_blank" rel="noreferrer" className="news-card">
-              <img src={n.imageurl} alt="news" className="news-img" />
+              {/* الميزة السحرية: إذا فشلت الصورة تضع صورة احتياطية بدلاً من كسر التصميم */}
+              <img 
+                src={n.imageurl || DEFAULT_NEWS_IMAGE} 
+                alt="news" 
+                className="news-img"
+                onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_NEWS_IMAGE; }} 
+              />
               <div className="news-content">
                 <h3 style={{ margin: '0 0 10px 0', fontSize: 16, lineHeight: 1.5 }}>{n.title}</h3>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -206,7 +231,6 @@ export default function App() {
         )}
       </div>
 
-      {/* Chart & AI Signals Modal */}
       {selectedCoin && (
         <div className="modal-overlay" onClick={() => setSelectedCoin(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ paddingBottom: 40 }}>
@@ -230,7 +254,6 @@ export default function App() {
               </div>
             )}
 
-            {/* AI Trading Signals Card */}
             <div style={{ background: 'rgba(57, 255, 20, 0.05)', border: '1px solid rgba(57, 255, 20, 0.2)', padding: 20, borderRadius: 16, marginTop: 25 }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#39FF14', display: 'flex', alignItems: 'center', gap: 8, fontSize: 18 }}>
                 <Bot size={22} /> {t.aiAnalysis}
@@ -264,4 +287,4 @@ export default function App() {
       )}
     </div>
   );
-          }
+      }
