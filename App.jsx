@@ -302,7 +302,8 @@ const styles = StyleSheet.create({
   coinPrice: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   favBtn: { padding: 5 },
   newsCard: { backgroundColor: '#0f172a', borderRadius: 16, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: '#1e293b' },
-  newsImg: { width: '100%', height: 160, backgroundColor: '#1e293b' },newsContent: { padding: 15 },
+  newsImg: { width: '100%', height: 160, backgroundColor: '#1e293b' },
+  newsContent: { padding: 15 },
   newsTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', lineHeight: 22 },
   newsSource: { color: '#64748b', fontSize: 12, marginTop: 8 },
   readMore: { color: '#6366f1', fontSize: 13, fontWeight: 'bold', marginTop: 10 },
@@ -310,4 +311,3 @@ const styles = StyleSheet.create({
   modalContent: { backgroundColor: '#0f172a', padding: 25, borderTopLeftRadius: 30, borderTopRightRadius: 30, minHeight: '60%', borderWidth: 1, borderColor: '#1e293b' },
   modalHeader: { justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }
 });
-             
