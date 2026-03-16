@@ -118,7 +118,16 @@ body {
   display: block;
 }
 .news-img { width: 100%; height: 160px; object-fit: cover; }
-.news-content { padding: 15px; }
+.news-content { padding: 15px; }/* Notification System */
+.bell-container { position: relative; cursor: pointer; display: flex; align-items: center; }
+.badge { position: absolute; top: -5px; right: -5px; background-color: #ef4444; color: white; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid #0f172a; }
+.notification-panel { position: absolute; top: 60px; right: 10px; left: 10px; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 15px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-height: 300px; overflow-y: auto; }
+.notif-item { padding: 12px; border-bottom: 1px solid #1e293b; display: flex; gap: 12px; align-items: flex-start; }
+.notif-item:last-child { border-bottom: none; }
+.notif-icon { background: rgba(99, 102, 241, 0.1); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.notif-title { color: #fff; font-size: 14px; font-weight: bold; margin: 0 0 5px 0; }
+.notif-desc { color: #94a3b8; font-size: 12px; margin: 0; line-height: 1.4; }
+.notif-time { color: #64748b; font-size: 10px; margin-top: 5px; display: block; }
 
 /* Modal */
 .modal-overlay {
