@@ -20,29 +20,32 @@ const translations = {
   }
 };
 
-// مكتبة أخبار احتياطية في حال تعطل النت تماماً (تم زيادتها)
+// 6 أخبار احتياطية بصور مختلفة في حال تعطل النت تماماً
 const fallbackNews =[
   { id: 'f1', title: "البيتكوين يكسر حواجز جديدة وسط تفاؤل المستثمرين بصناديق ETF", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
   { id: 'f2', title: "Ethereum Foundation announces new scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" },
-  { id: 'f3', title: "الذكاء الاصطناعي يقتحم عالم التداول الرقمي بقوة هذا العام", source_info: { name: "AI Tech Daily" }, url: "https://decrypt.co", imageurl: "https://images.unsplash.com/photo-1639762681485-074b7f4ec651?auto=format&fit=crop&w=600&q=80" }
+  { id: 'f3', title: "الذكاء الاصطناعي يقتحم عالم التداول الرقمي بقوة هذا العام", source_info: { name: "AI Tech Daily" }, url: "https://decrypt.co", imageurl: "https://images.unsplash.com/photo-1639762681485-074b7f4ec651?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f4', title: "Solana network reaches all-time high in daily active users", source_info: { name: "Web3 Times" }, url: "https://blockworks.co", imageurl: "https://images.unsplash.com/photo-1641580529558-a96d473b6f00?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f5', title: "حيتان السوق يتحركون: نقل ملايين الدولارات من منصات التداول", source_info: { name: "Trading MENA" }, url: "https://ar.cointelegraph.com/", imageurl: "https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f6', title: "Binance continues to expand despite regulatory challenges", source_info: { name: "Crypto News" }, url: "https://binance.com", imageurl: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80" }
 ];
 const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80";
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('radarx_logged_in') === 'true');
+  const[isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('radarx_logged_in') === 'true');
   const [loading, setLoading] = useState(false);
-  const[coins, setCoins] = useState([]);
+  const [coins, setCoins] = useState([]);
   const [filteredCoins, setFilteredCoins] = useState([]);
   const [news, setNews] = useState([]);
   const [lang, setLang] = useState('ar');
-  const[searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('market');
-  const [watchlist, setWatchlist] = useState([]);
+  const[watchlist, setWatchlist] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState(null);
   
-  const[showNotifs, setShowNotifs] = useState(false);
-  const [alerts, setAlerts] = useState([]);
-  const[unread, setUnread] = useState(0);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const[alerts, setAlerts] = useState([]);
+  const [unread, setUnread] = useState(0);
 
   const t = translations[lang];
   const isAr = lang === 'ar';
@@ -74,15 +77,27 @@ export default function App() {
       
       let dataNews = fallbackNews;
       try {
-        // تم الترقية إلى CryptoCompare (سريع جداً ومجاني)
-        const resNews = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
+        const resNews = await fetch('https://api.coingecko.com/api/v3/news');
         const parsedNews = await resNews.json();
-        if (parsedNews?.Data?.length > 0) {
-          dataNews = parsedNews.Data.slice(0, 30).map(n => ({
-            id: n.id, title: n.title, url: n.url, imageurl: n.imageurl, source_info: { name: n.source_info.name }
+        if (parsedNews?.data?.length > 0) {
+          dataNews = parsedNews.data.slice(0, 30).map((n, i) => ({
+            id: `cg_${i}`, title: n.title, url: n.url, imageurl: n.thumb_2x, source_info: { name: n.news_site }
           }));
-        }
-      } catch (e) { console.error("News API Error:", e); }
+        } else { throw new Error("Empty CG API"); }
+      } catch (e1) { 
+         try {
+           const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
+           const resNews2 = await fetch(proxyUrl);
+           const parsedNews2 = await resNews2.json();
+           if (parsedNews2?.Data?.length > 0) {
+             dataNews = parsedNews2.Data.slice(0, 30).map(n => ({
+               id: n.id, title: n.title, url: n.url, imageurl: n.imageurl, source_info: { name: n.source_info.name }
+             }));
+           }
+         } catch (e2) {
+             console.error("All News APIs blocked by browser", e2);
+         }
+      }
 
       if(dataCoins?.length > 0) {
         setCoins(dataCoins);
@@ -93,7 +108,6 @@ export default function App() {
     setLoading(false);
   };
 
-  // نظام ذكي يقرأ الإشعارات المحذوفة لكي لا يكررها
   const generateSmartAlerts = (cData, nData) => {
     const readAlerts = JSON.parse(localStorage.getItem('radarx_read_alerts') || '[]');
     let newAlerts =[];
@@ -112,13 +126,11 @@ export default function App() {
       newAlerts.push({ id: `news_${nData[0].id}`, type: 'news', title: '📰 خبر عاجل للتو', desc: nData[0].title, time: 'الآن' });
     }
 
-    // تصفية الإشعارات التي تم قراءتها مسبقاً
     const unreadAlerts = newAlerts.filter(alert => !readAlerts.includes(alert.id));
     setAlerts(unreadAlerts); 
     setUnread(unreadAlerts.length);
   };
 
-  // دالة تحديد كـ مقروء (حفظ في الذاكرة)
   const markAllAsRead = () => {
     const readAlerts = JSON.parse(localStorage.getItem('radarx_read_alerts') || '[]');
     const currentAlertIds = alerts.map(a => a.id);
