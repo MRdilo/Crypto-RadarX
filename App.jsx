@@ -21,7 +21,7 @@ const translations = {
 };
 
 const fallbackNews =[
-  { title: "البيتكوين يكسر حواجز جديدة وسط تفاؤل المستثمرين بصناديق ETF", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
+  { title: "Bitcoin Breaks New Barriers Amid ETF Optimism", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
   { title: "Ethereum Foundation announces new scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" }
 ];
 const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80";
@@ -29,19 +29,18 @@ const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('radarx_logged_in') === 'true');
   const [loading, setLoading] = useState(false);
-  const [coins, setCoins] = useState([]);
-  const[filteredCoins, setFilteredCoins] = useState([]);
-  const [news, setNews] = useState([]);
-  const[lang, setLang] = useState('ar');
+  const[coins, setCoins] = useState([]);
+  const [filteredCoins, setFilteredCoins] = useState([]);
+  const[news, setNews] = useState([]);
+  const [lang, setLang] = useState('ar');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('market');
   const [watchlist, setWatchlist] = useState([]);
-  const[selectedCoin, setSelectedCoin] = useState(null);
+  const [selectedCoin, setSelectedCoin] = useState(null);
   
-  // نظام الإشعارات الجديد
   const[showNotifs, setShowNotifs] = useState(false);
   const [alerts, setAlerts] = useState([]);
-  const [unread, setUnread] = useState(0);
+  const[unread, setUnread] = useState(0);
 
   const t = translations[lang];
   const isAr = lang === 'ar';
@@ -53,9 +52,7 @@ export default function App() {
   },[]);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchData();
-    }
+    if (isLoggedIn) fetchData();
   }, [isLoggedIn]);
 
   useEffect(() => {
@@ -75,10 +72,16 @@ export default function App() {
       
       let dataNews = fallbackNews;
       try {
-        const resNews = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
+        // تم الترقية إلى CoinGecko News API (متجدد جداً ونشط يومياً)
+        const resNews = await fetch('https://api.coingecko.com/api/v3/news');
         const parsedNews = await resNews.json();
-        if (parsedNews?.Data?.length > 0) dataNews = parsedNews.Data.slice(0, 15);
-      } catch (e) {}
+        if (parsedNews?.data?.length > 0) {
+          // تنسيق الأخبار لتطابق واجهتنا
+          dataNews = parsedNews.data.slice(0, 30).map(n => ({
+            title: n.title, url: n.url, imageurl: n.thumb_2x, source_info: { name: n.news_site }, published_on: n.created_at
+          }));
+        }
+      } catch (e) { console.error("News API Failed:", e); }
 
       if(dataCoins?.length > 0) {
         setCoins(dataCoins);
@@ -89,27 +92,20 @@ export default function App() {
     setLoading(false);
   };
 
-  // نظام توليد إشعارات ذكية بناءً على تحركات السوق
   const generateSmartAlerts = (cData, nData) => {
     let newAlerts =[];
-    
-    // مراقبة مفضلة المستخدم
     const favs = cData.filter(c => watchlist.includes(c.id));
     favs.forEach(c => {
-      if(c.price_change_percentage_24h > 5) {
-        newAlerts.push({ id: `up_${c.id}`, type: 'bull', title: `${c.name} يطير عالياً! 🚀`, desc: `العملة ارتفعت بنسبة ${c.price_change_percentage_24h.toFixed(2)}% اليوم.`, time: 'الآن' });
-      } else if(c.price_change_percentage_24h < -5) {
-        newAlerts.push({ id: `down_${c.id}`, type: 'bear', title: `${c.name} في هبوط 📉`, desc: `انخفضت بنسبة ${Math.abs(c.price_change_percentage_24h).toFixed(2)}% راقب نقاط الدعم.`, time: 'الآن' });
+      // إجبار الأرقام لتكون بصيغة en-US داخل الإشعارات
+      const change = c.price_change_percentage_24h;
+      if(change > 5) {
+        newAlerts.push({ id: `up_${c.id}`, type: 'bull', title: `${c.name} يطير عالياً! 🚀`, desc: `ارتفعت بنسبة ${change.toLocaleString('en-US', {maximumFractionDigits:2})}% اليوم.`, time: 'الآن' });
+      } else if(change < -5) {
+        newAlerts.push({ id: `down_${c.id}`, type: 'bear', title: `${c.name} في هبوط 📉`, desc: `انخفضت بنسبة ${Math.abs(change).toLocaleString('en-US', {maximumFractionDigits:2})}% راقب الدعم.`, time: 'الآن' });
       }
     });
-
-    // إضافة خبر عاجل
-    if(nData.length > 0) {
-      newAlerts.push({ id: 'news_1', type: 'news', title: '📰 خبر عاجل', desc: nData[0].title, time: 'منذ 10 دقائق' });
-    }
-
-    setAlerts(newAlerts);
-    setUnread(newAlerts.length);
+    if(nData.length > 0) newAlerts.push({ id: 'news_1', type: 'news', title: '📰 خبر عاجل للتو', desc: nData[0].title, time: 'الآن' });
+    setAlerts(newAlerts); setUnread(newAlerts.length);
   };
 
   const toggleWatchlist = (e, coinId) => {
@@ -147,29 +143,25 @@ export default function App() {
 
   return (
     <div className="app-container" style={{ direction: dir }}>
-      {/* Header with Notification Bell */}
       <div className="header" style={{ position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Radar size={28} color="#39FF14" />
           <h2 style={{ margin: 0, fontWeight: 900 }}>{t.title}</h2>
         </div>
-        
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div className="bell-container" onClick={() => { setShowNotifs(!showNotifs); setUnread(0); }}>
             {unread > 0 ? <BellRing size={24} color="#39FF14" style={{animation: 'pulse 2s infinite'}} /> : <Bell size={24} color="#f8fafc" />}
-            {unread > 0 && <div className="badge">{unread}</div>}
+            {unread > 0 && <div className="badge">{unread.toLocaleString('en-US')}</div>}
           </div>
           <LogOut size={24} color="#ef4444" cursor="pointer" onClick={() => { localStorage.removeItem('radarx_logged_in'); setIsLoggedIn(false); }} />
         </div>
 
-        {/* Notification Panel */}
         {showNotifs && (
           <div className="notification-panel" style={{ textAlign: isAr ? 'right' : 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: 16 }}>{t.notifications}</h3>
               {alerts.length > 0 && <span style={{ color: '#39FF14', fontSize: 12, cursor: 'pointer' }} onClick={() => setAlerts([])}>{t.markRead}</span>}
             </div>
-            
             {alerts.length === 0 ? (
               <p style={{ color: '#64748b', textAlign: 'center', fontSize: 14 }}>{t.noNotifs}</p>
             ) : (
@@ -235,10 +227,11 @@ export default function App() {
                   <div style={{ color: '#64748b', fontSize: 13 }}>{coin.symbol.toUpperCase()}</div>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: 16 }}>${coin.current_price.toLocaleString()}</div>
+                  {/* إجبار الأرقام لتكون بالصيغة الإنجليزية */}
+                  <div style={{ fontWeight: 'bold', fontSize: 16 }}>${coin.current_price.toLocaleString('en-US')}</div>
                   <div style={{ color: isPos ? '#10b981' : '#ef4444', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, justifyContent: isAr ? 'flex-start' : 'flex-end' }}>
                     {isPos ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                    {Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
+                    {Math.abs(coin.price_change_percentage_24h).toLocaleString('en-US', {maximumFractionDigits:2})}%
                   </div>
                 </div>
                 <div style={{ padding: '0 10px', cursor: 'pointer' }} onClick={(e) => toggleWatchlist(e, coin.id)}>
@@ -260,7 +253,8 @@ export default function App() {
               </div>
               <XCircle size={30} color="#64748b" cursor="pointer" onClick={() => setSelectedCoin(null)} />
             </div>
-            <h1 style={{ margin: '0 0 20px 0', fontSize: 36 }}>${selectedCoin.current_price.toLocaleString()}</h1>
+            {/* إجبار الأرقام لتكون بالصيغة الإنجليزية */}
+            <h1 style={{ margin: '0 0 20px 0', fontSize: 36 }}>${selectedCoin.current_price.toLocaleString('en-US')}</h1>
             
             {selectedCoin.sparkline_in_7d && (
               <div style={{ width: '100%', height: 180 }}>
@@ -281,15 +275,15 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span style={{ color: '#94a3b8' }}>{t.entry}:</span>
-                <strong style={{ color: '#fff' }}>${getAISignals(selectedCoin).entry.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})}</strong>
+                <strong style={{ color: '#fff' }}>${getAISignals(selectedCoin).entry.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 6})}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span style={{ color: '#94a3b8', display: 'flex', alignItems:'center', gap:6 }}><Target size={16}/> {t.target}:</span>
-                <strong style={{ color: '#10b981' }}>${getAISignals(selectedCoin).tp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})}</strong>
+                <strong style={{ color: '#10b981' }}>${getAISignals(selectedCoin).tp.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 6})}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#94a3b8', display: 'flex', alignItems:'center', gap:6 }}><ShieldAlert size={16}/> {t.stop}:</span>
-                <strong style={{ color: '#ef4444' }}>${getAISignals(selectedCoin).sl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})}</strong>
+                <strong style={{ color: '#ef4444' }}>${getAISignals(selectedCoin).sl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 6})}</strong>
               </div>
             </div>
 
@@ -298,4 +292,4 @@ export default function App() {
       )}
     </div>
   );
-  }
+                                         }
