@@ -139,3 +139,21 @@ body {
   border-radius: 30px 30px 0 0; padding: 25px; border: 1px solid #1e293b;
   box-sizing: border-box;
            }
+/* تأثيرات وميض الأسعار اللحظية (WebSockets) */
+@keyframes flashGreen {
+  0% { background-color: rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 8px; padding: 2px 6px; }
+  100% { background-color: transparent; color: inherit; padding: 2px 6px; }
+}
+@keyframes flashRed {
+  0% { background-color: rgba(239, 68, 68, 0.4); color: #ef4444; border-radius: 8px; padding: 2px 6px; }
+  100% { background-color: transparent; color: inherit; padding: 2px 6px; }
+}
+.flash-up { animation: flashGreen 1s ease-out; color: #10b981 !important; font-weight: 900; }
+.flash-down { animation: flashRed 1s ease-out; color: #ef4444 !important; font-weight: 900; }
+.price-container { transition: color 0.3s; padding: 2px 6px; display: inline-block; }
+
+/* أزرار الإطارات الزمنية للرسم البياني */
+.timeframe-container { display: flex; gap: 10px; margin-bottom: 15px; justify-content: center; }
+.tf-btn { background: #1e293b; color: #94a3b8; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: 'Tajawal'; font-weight: bold; transition: 0.2s; }
+.tf-btn:hover { background: #334155; color: #fff; }
+.tf-btn.active { background: #39FF14; color: #000; box-shadow: 0 0 10px rgba(57, 255, 20, 0.4); }
