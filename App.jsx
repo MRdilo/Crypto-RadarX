@@ -20,9 +20,11 @@ const translations = {
   }
 };
 
+// مكتبة أخبار احتياطية في حال تعطل النت تماماً (تم زيادتها)
 const fallbackNews =[
-  { title: "Bitcoin Breaks New Barriers Amid ETF Optimism", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
-  { title: "Ethereum Foundation announces new scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" }
+  { id: 'f1', title: "البيتكوين يكسر حواجز جديدة وسط تفاؤل المستثمرين بصناديق ETF", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f2', title: "Ethereum Foundation announces new scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f3', title: "الذكاء الاصطناعي يقتحم عالم التداول الرقمي بقوة هذا العام", source_info: { name: "AI Tech Daily" }, url: "https://decrypt.co", imageurl: "https://images.unsplash.com/photo-1639762681485-074b7f4ec651?auto=format&fit=crop&w=600&q=80" }
 ];
 const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80";
 
@@ -31,9 +33,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const[coins, setCoins] = useState([]);
   const [filteredCoins, setFilteredCoins] = useState([]);
-  const[news, setNews] = useState([]);
+  const [news, setNews] = useState([]);
   const [lang, setLang] = useState('ar');
-  const [searchQuery, setSearchQuery] = useState('');
+  const[searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('market');
   const [watchlist, setWatchlist] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState(null);
@@ -53,7 +55,7 @@ export default function App() {
 
   useEffect(() => {
     if (isLoggedIn) fetchData();
-  }, [isLoggedIn]);
+  },[isLoggedIn]);
 
   useEffect(() => {
     let source = activeTab === 'watchlist' ? coins.filter(c => watchlist.includes(c.id)) : coins;
@@ -72,16 +74,15 @@ export default function App() {
       
       let dataNews = fallbackNews;
       try {
-        // تم الترقية إلى CoinGecko News API (متجدد جداً ونشط يومياً)
-        const resNews = await fetch('https://api.coingecko.com/api/v3/news');
+        // تم الترقية إلى CryptoCompare (سريع جداً ومجاني)
+        const resNews = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
         const parsedNews = await resNews.json();
-        if (parsedNews?.data?.length > 0) {
-          // تنسيق الأخبار لتطابق واجهتنا
-          dataNews = parsedNews.data.slice(0, 30).map(n => ({
-            title: n.title, url: n.url, imageurl: n.thumb_2x, source_info: { name: n.news_site }, published_on: n.created_at
+        if (parsedNews?.Data?.length > 0) {
+          dataNews = parsedNews.Data.slice(0, 30).map(n => ({
+            id: n.id, title: n.title, url: n.url, imageurl: n.imageurl, source_info: { name: n.source_info.name }
           }));
         }
-      } catch (e) { console.error("News API Failed:", e); }
+      } catch (e) { console.error("News API Error:", e); }
 
       if(dataCoins?.length > 0) {
         setCoins(dataCoins);
@@ -92,25 +93,45 @@ export default function App() {
     setLoading(false);
   };
 
+  // نظام ذكي يقرأ الإشعارات المحذوفة لكي لا يكررها
   const generateSmartAlerts = (cData, nData) => {
+    const readAlerts = JSON.parse(localStorage.getItem('radarx_read_alerts') || '[]');
     let newAlerts =[];
+    
     const favs = cData.filter(c => watchlist.includes(c.id));
     favs.forEach(c => {
-      // إجبار الأرقام لتكون بصيغة en-US داخل الإشعارات
       const change = c.price_change_percentage_24h;
       if(change > 5) {
-        newAlerts.push({ id: `up_${c.id}`, type: 'bull', title: `${c.name} يطير عالياً! 🚀`, desc: `ارتفعت بنسبة ${change.toLocaleString('en-US', {maximumFractionDigits:2})}% اليوم.`, time: 'الآن' });
+        newAlerts.push({ id: `up_${c.id}_${change.toFixed(1)}`, type: 'bull', title: `${c.name} يطير عالياً! 🚀`, desc: `ارتفعت بنسبة ${change.toLocaleString('en-US', {maximumFractionDigits:2})}% اليوم.`, time: 'تحديث السوق' });
       } else if(change < -5) {
-        newAlerts.push({ id: `down_${c.id}`, type: 'bear', title: `${c.name} في هبوط 📉`, desc: `انخفضت بنسبة ${Math.abs(change).toLocaleString('en-US', {maximumFractionDigits:2})}% راقب الدعم.`, time: 'الآن' });
+        newAlerts.push({ id: `down_${c.id}_${change.toFixed(1)}`, type: 'bear', title: `${c.name} في هبوط 📉`, desc: `انخفضت بنسبة ${Math.abs(change).toLocaleString('en-US', {maximumFractionDigits:2})}% راقب الدعم.`, time: 'تحديث السوق' });
       }
     });
-    if(nData.length > 0) newAlerts.push({ id: 'news_1', type: 'news', title: '📰 خبر عاجل للتو', desc: nData[0].title, time: 'الآن' });
-    setAlerts(newAlerts); setUnread(newAlerts.length);
+
+    if(nData.length > 0) {
+      newAlerts.push({ id: `news_${nData[0].id}`, type: 'news', title: '📰 خبر عاجل للتو', desc: nData[0].title, time: 'الآن' });
+    }
+
+    // تصفية الإشعارات التي تم قراءتها مسبقاً
+    const unreadAlerts = newAlerts.filter(alert => !readAlerts.includes(alert.id));
+    setAlerts(unreadAlerts); 
+    setUnread(unreadAlerts.length);
+  };
+
+  // دالة تحديد كـ مقروء (حفظ في الذاكرة)
+  const markAllAsRead = () => {
+    const readAlerts = JSON.parse(localStorage.getItem('radarx_read_alerts') || '[]');
+    const currentAlertIds = alerts.map(a => a.id);
+    const updatedReadAlerts =[...readAlerts, ...currentAlertIds];
+    localStorage.setItem('radarx_read_alerts', JSON.stringify(updatedReadAlerts));
+    setAlerts([]);
+    setUnread(0);
+    setShowNotifs(false);
   };
 
   const toggleWatchlist = (e, coinId) => {
     e.stopPropagation();
-    let updated = watchlist.includes(coinId) ? watchlist.filter(id => id !== coinId) : [...watchlist, coinId];
+    let updated = watchlist.includes(coinId) ? watchlist.filter(id => id !== coinId) :[...watchlist, coinId];
     setWatchlist(updated);
     localStorage.setItem('radarx_watchlist', JSON.stringify(updated));
   };const getAISignals = (coin) => {
@@ -149,7 +170,7 @@ export default function App() {
           <h2 style={{ margin: 0, fontWeight: 900 }}>{t.title}</h2>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div className="bell-container" onClick={() => { setShowNotifs(!showNotifs); setUnread(0); }}>
+          <div className="bell-container" onClick={() => setShowNotifs(!showNotifs)}>
             {unread > 0 ? <BellRing size={24} color="#39FF14" style={{animation: 'pulse 2s infinite'}} /> : <Bell size={24} color="#f8fafc" />}
             {unread > 0 && <div className="badge">{unread.toLocaleString('en-US')}</div>}
           </div>
@@ -160,7 +181,7 @@ export default function App() {
           <div className="notification-panel" style={{ textAlign: isAr ? 'right' : 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: 16 }}>{t.notifications}</h3>
-              {alerts.length > 0 && <span style={{ color: '#39FF14', fontSize: 12, cursor: 'pointer' }} onClick={() => setAlerts([])}>{t.markRead}</span>}
+              {alerts.length > 0 && <span style={{ color: '#39FF14', fontSize: 12, cursor: 'pointer' }} onClick={markAllAsRead}>{t.markRead}</span>}
             </div>
             {alerts.length === 0 ? (
               <p style={{ color: '#64748b', textAlign: 'center', fontSize: 14 }}>{t.noNotifs}</p>
@@ -202,7 +223,7 @@ export default function App() {
           <div style={{ textAlign: 'center', color: '#39FF14', marginTop: 50, fontWeight: 'bold' }}>جاري المسح بالرادار...</div>
         ) : activeTab === 'news' ? (
           news.map((n, i) => (
-            <a key={i} href={n.url} target="_blank" rel="noreferrer" className="news-card">
+            <a key={n.id || i} href={n.url} target="_blank" rel="noreferrer" className="news-card">
               <img src={n.imageurl || DEFAULT_NEWS_IMAGE} alt="news" className="news-img" onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_NEWS_IMAGE; }} />
               <div className="news-content">
                 <h3 style={{ margin: '0 0 10px 0', fontSize: 16 }}>{n.title}</h3>
@@ -227,7 +248,6 @@ export default function App() {
                   <div style={{ color: '#64748b', fontSize: 13 }}>{coin.symbol.toUpperCase()}</div>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  {/* إجبار الأرقام لتكون بالصيغة الإنجليزية */}
                   <div style={{ fontWeight: 'bold', fontSize: 16 }}>${coin.current_price.toLocaleString('en-US')}</div>
                   <div style={{ color: isPos ? '#10b981' : '#ef4444', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, justifyContent: isAr ? 'flex-start' : 'flex-end' }}>
                     {isPos ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -253,7 +273,6 @@ export default function App() {
               </div>
               <XCircle size={30} color="#64748b" cursor="pointer" onClick={() => setSelectedCoin(null)} />
             </div>
-            {/* إجبار الأرقام لتكون بالصيغة الإنجليزية */}
             <h1 style={{ margin: '0 0 20px 0', fontSize: 36 }}>${selectedCoin.current_price.toLocaleString('en-US')}</h1>
             
             {selectedCoin.sparkline_in_7d && (
@@ -292,4 +311,4 @@ export default function App() {
       )}
     </div>
   );
-                                         }
+  }
