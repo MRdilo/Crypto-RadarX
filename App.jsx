@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
-import { Radar, LogOut, Search, Star, BarChart2, Newspaper, TrendingUp, TrendingDown, XCircle, Bot, Target, ShieldAlert, Crosshair, Bell, BellRing } from 'lucide-react';
+import { Radar, LogOut, Search, Star, BarChart2, Newspaper, TrendingUp, TrendingDown, XCircle, Bot, Target, ShieldAlert, Crosshair, Bell, BellRing, Gauge } from 'lucide-react';
 import './App.css';
 
 const translations = {
@@ -9,37 +9,38 @@ const translations = {
     title: 'Market Radar', langBtn: 'العربية', search: 'Search coins...', market: 'Market', watchlist: 'Watchlist', news: 'News',
     emptyWatchlist: 'Your watchlist is empty.', noResults: 'No coins found.', readMore: 'Read Article',
     aiAnalysis: 'AI Trading Signals', signal: 'Signal', entry: 'Entry Point', target: 'Take Profit', stop: 'Stop Loss',
-    notifications: 'Notifications', noNotifs: 'No new alerts.', markRead: 'Mark all as read'
+    notifications: 'Notifications', noNotifs: 'No new alerts.', markRead: 'Mark all as read',
+    fng: 'Fear & Greed Index', topGainers: 'Top Gainers', topLosers: 'Top Losers', allCoins: 'All Coins'
   },
   ar: {
     welcome: 'مرحباً بك في RadarX', loginDesc: 'رادارك المدعوم بالذكاء الاصطناعي', loginBtn: '🚀 تشغيل الرادار', 
     title: 'سوق الرادار', langBtn: 'English', search: 'ابحث عن عملة...', market: 'السوق', watchlist: 'المفضلة', news: 'الأخبار',
     emptyWatchlist: 'قائمة المفضلة فارغة.', noResults: 'لم يتم العثور على عملات.', readMore: 'قراءة المقال',
     aiAnalysis: 'توصيات الذكاء الاصطناعي', signal: 'الإشارة', entry: 'نقطة الدخول', target: 'جني الأرباح', stop: 'وقف الخسارة',
-    notifications: 'الإشعارات التنبيهية', noNotifs: 'لا توجد تنبيهات جديدة.', markRead: 'تحديد كـ مقروء'
+    notifications: 'الإشعارات التنبيهية', noNotifs: 'لا توجد تنبيهات جديدة.', markRead: 'تحديد كـ مقروء',
+    fng: 'مؤشر الخوف والطمع', topGainers: 'الأكثر ربحاً', topLosers: 'الأكثر خسارة', allCoins: 'السوق كامل'
   }
 };
 
-// 6 أخبار احتياطية بصور مختلفة في حال تعطل النت تماماً
 const fallbackNews =[
-  { id: 'f1', title: "البيتكوين يكسر حواجز جديدة وسط تفاؤل المستثمرين بصناديق ETF", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
-  { id: 'f2', title: "Ethereum Foundation announces new scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" },
-  { id: 'f3', title: "الذكاء الاصطناعي يقتحم عالم التداول الرقمي بقوة هذا العام", source_info: { name: "AI Tech Daily" }, url: "https://decrypt.co", imageurl: "https://images.unsplash.com/photo-1639762681485-074b7f4ec651?auto=format&fit=crop&w=600&q=80" },
-  { id: 'f4', title: "Solana network reaches all-time high in daily active users", source_info: { name: "Web3 Times" }, url: "https://blockworks.co", imageurl: "https://images.unsplash.com/photo-1641580529558-a96d473b6f00?auto=format&fit=crop&w=600&q=80" },
-  { id: 'f5', title: "حيتان السوق يتحركون: نقل ملايين الدولارات من منصات التداول", source_info: { name: "Trading MENA" }, url: "https://ar.cointelegraph.com/", imageurl: "https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=600&q=80" },
-  { id: 'f6', title: "Binance continues to expand despite regulatory challenges", source_info: { name: "Crypto News" }, url: "https://binance.com", imageurl: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80" }
+  { id: 'f1', title: "البيتكوين يكسر حواجز جديدة وسط تفاؤل المستثمرين", source_info: { name: "CryptoArab" }, url: "https://cointelegraph.com", imageurl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f2', title: "Ethereum announces new scaling upgrades", source_info: { name: "Global Crypto" }, url: "https://coindesk.com", imageurl: "https://images.unsplash.com/photo-1622630998477-20b41cd74c15?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f3', title: "الذكاء الاصطناعي يقتحم التداول بقوة هذا العام", source_info: { name: "AI Tech Daily" }, url: "https://decrypt.co", imageurl: "https://images.unsplash.com/photo-1639762681485-074b7f4ec651?auto=format&fit=crop&w=600&q=80" },
+  { id: 'f4', title: "Solana reaches all-time high in active users", source_info: { name: "Web3 Times" }, url: "https://blockworks.co", imageurl: "https://images.unsplash.com/photo-1641580529558-a96d473b6f00?auto=format&fit=crop&w=600&q=80" }
 ];
 const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80";
 
 export default function App() {
-  const[isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('radarx_logged_in') === 'true');
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('radarx_logged_in') === 'true');
   const [loading, setLoading] = useState(false);
-  const [coins, setCoins] = useState([]);
+  const[coins, setCoins] = useState([]);
   const [filteredCoins, setFilteredCoins] = useState([]);
-  const [news, setNews] = useState([]);
+  const[news, setNews] = useState([]);
+  const [fng, setFng] = useState({ value: 50, class: 'Neutral' });
   const [lang, setLang] = useState('ar');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('market');
+  const [sortFilter, setSortFilter] = useState('all'); // all, gainers, losers
   const[watchlist, setWatchlist] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState(null);
   
@@ -61,50 +62,60 @@ export default function App() {
   },[isLoggedIn]);
 
   useEffect(() => {
-    let source = activeTab === 'watchlist' ? coins.filter(c => watchlist.includes(c.id)) : coins;
-    if (searchQuery.trim() === '') setFilteredCoins(source);
-    else {
-      const lower = searchQuery.toLowerCase();
-      setFilteredCoins(source.filter(c => c.name.toLowerCase().includes(lower) || c.symbol.toLowerCase().includes(lower)));
-    }
-  },[searchQuery, coins, activeTab, watchlist]);
+    let source = activeTab === 'watchlist' ? coins.filter(c => watchlist.includes(c.id)) : [...coins];
+    
+    // تطبيق الفلترة الجديدة (الأكثر ربحاً / خسارة)
+    if (sortFilter === 'gainers') source.sort((a,b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+    if (sortFilter === 'losers') source.sort((a,b) => a.price_change_percentage_24h - b.price_change_percentage_24h);
 
+    if (searchQuery.trim() !== '') {
+      const lower = searchQuery.toLowerCase();
+      source = source.filter(c => c.name.toLowerCase().includes(lower) || c.symbol.toLowerCase().includes(lower));
+    }
+    setFilteredCoins(source);
+  },[searchQuery, coins, activeTab, watchlist, sortFilter]);
+
+  // محرك الجلب الصاروخي (Parallel Fetching)
   const fetchData = async () => {
     setLoading(true);
     try {
-      const resCoins = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=true');
-      const dataCoins = await resCoins.json();
-      
-      let dataNews = fallbackNews;
-      try {
-        const resNews = await fetch('https://api.coingecko.com/api/v3/news');
-        const parsedNews = await resNews.json();
-        if (parsedNews?.data?.length > 0) {
-          dataNews = parsedNews.data.slice(0, 30).map((n, i) => ({
-            id: `cg_${i}`, title: n.title, url: n.url, imageurl: n.thumb_2x, source_info: { name: n.news_site }
-          }));
-        } else { throw new Error("Empty CG API"); }
-      } catch (e1) { 
-         try {
-           const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
-           const resNews2 = await fetch(proxyUrl);
-           const parsedNews2 = await resNews2.json();
-           if (parsedNews2?.Data?.length > 0) {
-             dataNews = parsedNews2.Data.slice(0, 30).map(n => ({
-               id: n.id, title: n.title, url: n.url, imageurl: n.imageurl, source_info: { name: n.source_info.name }
-             }));
-           }
-         } catch (e2) {
-             console.error("All News APIs blocked by browser", e2);
-         }
+      // نطلب كل البيانات في نفس الوقت لتسريع التحميل بشكل خرافي
+      const [resCoins, resNewsEn, resNewsAr, resFng] = await Promise.allSettled([
+        fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=true'),
+        fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss'),
+        fetch('https://api.rss2json.com/v1/api.json?rss_url=https://ar.cointelegraph.com/rss'),
+        fetch('https://api.alternative.me/fng/?limit=1')
+      ]);
+
+      let dataCoins = [];
+      let dataNews =[];
+
+      if (resCoins.status === 'fulfilled') {
+        dataCoins = await resCoins.value.json();
+        setCoins(dataCoins);
       }
 
-      if(dataCoins?.length > 0) {
-        setCoins(dataCoins);
-        setNews(dataNews);
-        generateSmartAlerts(dataCoins, dataNews);
+      if (resFng.status === 'fulfilled') {
+        const fngData = await resFng.value.json();
+        if (fngData?.data?.[0]) setFng({ value: fngData.data[0].value, class: fngData.data[0].value_classification });
       }
-    } catch (err) { console.error(err); }
+
+      // جلب الأخبار وتجميعها من الـ RSS (تتخطى الحظر وتجلب عشرات الأخبار المتجددة)
+      if (resNewsAr.status === 'fulfilled') {
+        const ar = await resNewsAr.value.json();
+        if (ar.items) dataNews =[...dataNews, ...ar.items.map(i => ({ id: i.guid, title: i.title, url: i.link, imageurl: i.thumbnail || i.enclosure?.link, source_info: { name: "CoinTelegraph AR" } }))];
+      }
+      if (resNewsEn.status === 'fulfilled') {
+        const en = await resNewsEn.value.json();
+        if (en.items) dataNews =[...dataNews, ...en.items.map(i => ({ id: i.guid, title: i.title, url: i.link, imageurl: i.thumbnail || i.enclosure?.link, source_info: { name: "CoinTelegraph EN" } }))];
+      }
+
+      if (dataNews.length === 0) dataNews = fallbackNews;
+      setNews(dataNews);
+
+      if (dataCoins.length > 0) generateSmartAlerts(dataCoins, dataNews);
+
+    } catch (err) { console.error("Fetch Error:", err); }
     setLoading(false);
   };
 
@@ -115,30 +126,21 @@ export default function App() {
     const favs = cData.filter(c => watchlist.includes(c.id));
     favs.forEach(c => {
       const change = c.price_change_percentage_24h;
-      if(change > 5) {
-        newAlerts.push({ id: `up_${c.id}_${change.toFixed(1)}`, type: 'bull', title: `${c.name} يطير عالياً! 🚀`, desc: `ارتفعت بنسبة ${change.toLocaleString('en-US', {maximumFractionDigits:2})}% اليوم.`, time: 'تحديث السوق' });
-      } else if(change < -5) {
-        newAlerts.push({ id: `down_${c.id}_${change.toFixed(1)}`, type: 'bear', title: `${c.name} في هبوط 📉`, desc: `انخفضت بنسبة ${Math.abs(change).toLocaleString('en-US', {maximumFractionDigits:2})}% راقب الدعم.`, time: 'تحديث السوق' });
-      }
+      if(change > 5) newAlerts.push({ id: `up_${c.id}_${change.toFixed(1)}`, type: 'bull', title: `${c.name} يطير عالياً! 🚀`, desc: `ارتفعت بنسبة ${change.toLocaleString('en-US', {maximumFractionDigits:2})}% اليوم.`, time: 'الآن' });
+      else if(change < -5) newAlerts.push({ id: `down_${c.id}_${change.toFixed(1)}`, type: 'bear', title: `${c.name} في هبوط 📉`, desc: `انخفضت بنسبة ${Math.abs(change).toLocaleString('en-US', {maximumFractionDigits:2})}% راقب الدعم.`, time: 'الآن' });
     });
 
-    if(nData.length > 0) {
-      newAlerts.push({ id: `news_${nData[0].id}`, type: 'news', title: '📰 خبر عاجل للتو', desc: nData[0].title, time: 'الآن' });
-    }
+    if(nData.length > 0) newAlerts.push({ id: `news_${nData[0].id}`, type: 'news', title: '📰 خبر عاجل', desc: nData[0].title, time: 'الآن' });
 
     const unreadAlerts = newAlerts.filter(alert => !readAlerts.includes(alert.id));
-    setAlerts(unreadAlerts); 
-    setUnread(unreadAlerts.length);
+    setAlerts(unreadAlerts); setUnread(unreadAlerts.length);
   };
 
   const markAllAsRead = () => {
     const readAlerts = JSON.parse(localStorage.getItem('radarx_read_alerts') || '[]');
-    const currentAlertIds = alerts.map(a => a.id);
-    const updatedReadAlerts =[...readAlerts, ...currentAlertIds];
+    const updatedReadAlerts =[...readAlerts, ...alerts.map(a => a.id)];
     localStorage.setItem('radarx_read_alerts', JSON.stringify(updatedReadAlerts));
-    setAlerts([]);
-    setUnread(0);
-    setShowNotifs(false);
+    setAlerts([]); setUnread(0); setShowNotifs(false);
   };
 
   const toggleWatchlist = (e, coinId) => {
@@ -149,10 +151,15 @@ export default function App() {
   };const getAISignals = (coin) => {
     if(!coin) return null;
     const isBullish = coin.price_change_percentage_24h > 0;
-    const volatility = Math.abs(coin.price_change_percentage_24h || 2);
-    const tp = isBullish ? coin.current_price * (1 + (volatility * 1.5 / 100)) : coin.current_price * (1 - (volatility * 1.5 / 100));
-    const sl = isBullish ? coin.current_price * (1 - (volatility * 0.8 / 100)) : coin.current_price * (1 + (volatility * 0.8 / 100));
+    const vol = Math.abs(coin.price_change_percentage_24h || 2);
+    const tp = isBullish ? coin.current_price * (1 + (vol * 1.5 / 100)) : coin.current_price * (1 - (vol * 1.5 / 100));
+    const sl = isBullish ? coin.current_price * (1 - (vol * 0.8 / 100)) : coin.current_price * (1 + (vol * 0.8 / 100));
     return { isBullish, entry: coin.current_price, tp, sl };
+  };
+
+  const getFngColor = (val) => {
+    if(val <= 25) return '#ef4444'; if(val <= 45) return '#f59e0b';
+    if(val <= 55) return '#eab308'; if(val <= 75) return '#84cc16'; return '#10b981';
   };
 
   if (!isLoggedIn) {
@@ -221,8 +228,31 @@ export default function App() {
         <div className={`tab ${activeTab === 'news' ? 'active' : ''}`} onClick={() => setActiveTab('news')}><Newspaper size={20} /> {t.news}</div>
       </div>
 
+      {activeTab === 'market' && (
+        <div style={{ padding: '16px 16px 0 16px' }}>
+          {/* مؤشر الخوف والطمع الجديد */}
+          <div style={{ background: '#0f172a', borderRadius: 16, padding: 15, marginBottom: 15, border: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Gauge size={24} color={getFngColor(fng.value)} />
+              <div>
+                <h4 style={{ margin: 0, fontSize: 14, color: '#94a3b8' }}>{t.fng}</h4>
+                <strong style={{ fontSize: 16, color: getFngColor(fng.value) }}>{fng.class}</strong>
+              </div>
+            </div>
+            <div style={{ fontSize: 24, fontWeight: '900', color: getFngColor(fng.value) }}>{fng.value}/100</div>
+          </div>
+
+          {/* أزرار الفلترة السريعة */}
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 10 }}>
+            <button onClick={() => setSortFilter('all')} style={{ padding: '8px 15px', borderRadius: 20, border: 'none', background: sortFilter === 'all' ? '#6366f1' : '#1e293b', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>{t.allCoins}</button>
+            <button onClick={() => setSortFilter('gainers')} style={{ padding: '8px 15px', borderRadius: 20, border: 'none', background: sortFilter === 'gainers' ? '#10b981' : '#1e293b', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>🔥 {t.topGainers}</button>
+            <button onClick={() => setSortFilter('losers')} style={{ padding: '8px 15px', borderRadius: 20, border: 'none', background: sortFilter === 'losers' ? '#ef4444' : '#1e293b', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>🔻 {t.topLosers}</button>
+          </div>
+        </div>
+      )}
+
       {activeTab !== 'news' && (
-        <div style={{ padding: 16 }}>
+        <div style={{ padding: '0 16px 16px 16px', marginTop: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, padding: '0 15px' }}>
             <Search size={20} color="#64748b" />
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.search} style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '15px 10px', outline: 'none', textAlign: isAr ? 'right' : 'left', fontFamily: 'Tajawal' }} />
@@ -238,7 +268,7 @@ export default function App() {
             <a key={n.id || i} href={n.url} target="_blank" rel="noreferrer" className="news-card">
               <img src={n.imageurl || DEFAULT_NEWS_IMAGE} alt="news" className="news-img" onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_NEWS_IMAGE; }} />
               <div className="news-content">
-                <h3 style={{ margin: '0 0 10px 0', fontSize: 16 }}>{n.title}</h3>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: 16, lineHeight: 1.5 }}>{n.title}</h3>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <p style={{ margin: 0, color: '#64748b', fontSize: 13, fontWeight: 'bold' }}>{n.source_info?.name}</p>
                   <span style={{ color: '#39FF14', fontSize: 12, fontWeight: 'bold' }}>{t.readMore} &rarr;</span>
@@ -323,4 +353,4 @@ export default function App() {
       )}
     </div>
   );
-  }
+      }
