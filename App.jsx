@@ -28,7 +28,7 @@ const fallbackNews =[
 ];
 const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80";
 
-// مكوّن الشموع اليابانية الاحترافي (TradingView Lightweight Charts)
+// مكوّن الشموع اليابانية (Lightweight Charts)
 const CandlestickChart = ({ data }) => {
   const chartContainerRef = useRef();
   useEffect(() => {
@@ -50,28 +50,27 @@ const CandlestickChart = ({ data }) => {
 };
 
 export default function App() {
-  const[isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('radarx_logged_in') === 'true');
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('radarx_logged_in') === 'true');
   const [loading, setLoading] = useState(false);
   const [coins, setCoins] = useState([]);
   const [filteredCoins, setFilteredCoins] = useState([]);
   const [news, setNews] = useState([]);
-  const [fng, setFng] = useState({ value: 50, class: 'Neutral' });
-  const [lang, setLang] = useState('ar');
-  const[searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('market');
-  const[sortFilter, setSortFilter] = useState('all');
+  const[fng, setFng] = useState({ value: 50, class: 'Neutral' });
+  const[lang, setLang] = useState('ar');
+  const [searchQuery, setSearchQuery] = useState('');
+  const[activeTab, setActiveTab] = useState('market');
+  const [sortFilter, setSortFilter] = useState('all');
   const [watchlist, setWatchlist] = useState([]);
-  const[selectedCoin, setSelectedCoin] = useState(null);
+  const [selectedCoin, setSelectedCoin] = useState(null);
   
-  const [showNotifs, setShowNotifs] = useState(false);
+  const[showNotifs, setShowNotifs] = useState(false);
   const [alerts, setAlerts] = useState([]);
-  const [unread, setUnread] = useState(0);
+  const[unread, setUnread] = useState(0);
 
-  // States الخاصة بالأسعار اللحظية والشموع
-  const[livePrices, setLivePrices] = useState({});
-  const [chartData, setChartData] = useState([]);
+  const [livePrices, setLivePrices] = useState({});
+  const[chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(false);
-  const[timeframe, setTimeframe] = useState('1'); // 1 = 24H, 7 = 7D, 30 = 1M
+  const [timeframe, setTimeframe] = useState('1'); 
 
   const t = translations[lang];
   const isAr = lang === 'ar';
@@ -82,16 +81,13 @@ export default function App() {
     if (saved) setWatchlist(JSON.parse(saved));
   },[]);
 
-  // محرك جلب البيانات الأساسية
   useEffect(() => {
     if (isLoggedIn) fetchData();
   },[isLoggedIn]);
 
-  // محرك الأسعار اللحظية (Binance WebSockets)
+  // محرك الأسعار اللحظية WebSockets
   useEffect(() => {
     if (!isLoggedIn || coins.length === 0) return;
-    
-    // إنشاء خريطة لتحويل الرموز (BTCUSDT -> bitcoin)
     const symbolMap = {};
     coins.forEach(c => { symbolMap[c.symbol.toUpperCase() + 'USDT'] = c.id; });
 
@@ -99,7 +95,6 @@ export default function App() {
     let lastUpdate = Date.now();
 
     ws.onmessage = (event) => {
-      // تحديث الأسعار مرة واحدة كل ثانية لتجنب تجميد المتصفح
       if (Date.now() - lastUpdate < 1000) return;
       lastUpdate = Date.now();
 
@@ -107,17 +102,13 @@ export default function App() {
       setLivePrices(prev => {
         const next = { ...prev };
         let hasChanges = false;
-
         tickers.forEach(t => {
           const coinId = symbolMap[t.s];
           if (coinId) {
             const newPrice = parseFloat(t.c);
             const oldPrice = prev[coinId]?.price || coins.find(c => c.id === coinId).current_price;
             if (newPrice !== oldPrice) {
-              next[coinId] = {
-                price: newPrice,
-                dir: newPrice > oldPrice ? 'up' : 'down'
-              };
+              next[coinId] = { price: newPrice, dir: newPrice > oldPrice ? 'up' : 'down' };
               hasChanges = true;
             }
           }
@@ -128,7 +119,6 @@ export default function App() {
     return () => ws.close();
   }, [coins, isLoggedIn]);
 
-  // جلب بيانات الشموع اليابانية (OHLC)
   useEffect(() => {
     if (!selectedCoin) return;
     const fetchOHLC = async () => {
@@ -136,10 +126,7 @@ export default function App() {
       try {
         const res = await fetch(`https://api.coingecko.com/api/v3/coins/${selectedCoin.id}/ohlc?vs_currency=usd&days=${timeframe}`);
         const data = await res.json();
-        // تنسيق البيانات لتناسب TradingView
-        const formatted = data.map(d => ({
-          time: d[0] / 1000, open: d[1], high: d[2], low: d[3], close: d[4]
-        }));
+        const formatted = data.map(d => ({ time: d[0] / 1000, open: d[1], high: d[2], low: d[3], close: d[4] }));
         setChartData(formatted);
       } catch (e) { console.error(e); }
       setChartLoading(false);
@@ -161,27 +148,59 @@ export default function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [resCoins, resNewsEn, resFng] = await Promise.allSettled([
+      const[resCoins, resNewsEn, resNewsAr, resFng] = await Promise.allSettled([
         fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false'),
         fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss'),
+        fetch('https://api.rss2json.com/v1/api.json?rss_url=https://ar.cointelegraph.com/rss'),
         fetch('https://api.alternative.me/fng/?limit=1')
       ]);
 
-      let dataCoins =[];
-      let dataNews = fallbackNews;
+      let dataCoins = [];
+      let dataNews =[];
 
-      if (resCoins.status === 'fulfilled') { dataCoins = await resCoins.value.json(); setCoins(dataCoins); }
+      if (resCoins.status === 'fulfilled') {
+        dataCoins = await resCoins.value.json();
+        setCoins(dataCoins);
+      }
       if (resFng.status === 'fulfilled') {
         const fngData = await resFng.value.json();
         if (fngData?.data?.[0]) setFng({ value: fngData.data[0].value, class: fngData.data[0].value_classification });
       }
+      if (resNewsAr.status === 'fulfilled') {
+        const ar = await resNewsAr.value.json();
+        if (ar.items) dataNews =[...dataNews, ...ar.items.map(i => ({ id: i.guid, title: i.title, url: i.link, imageurl: i.thumbnail || i.enclosure?.link, source_info: { name: "CoinTelegraph AR" } }))];
+      }
       if (resNewsEn.status === 'fulfilled') {
         const en = await resNewsEn.value.json();
-        if (en.items) dataNews = en.items.map(i => ({ id: i.guid, title: i.title, url: i.link, imageurl: i.thumbnail || i.enclosure?.link, source_info: { name: "CoinTelegraph" } }));
+        if (en.items) dataNews =[...dataNews, ...en.items.map(i => ({ id: i.guid, title: i.title, url: i.link, imageurl: i.thumbnail || i.enclosure?.link, source_info: { name: "CoinTelegraph EN" } }))];
       }
+
+      if (dataNews.length === 0) dataNews = fallbackNews;
       setNews(dataNews);
-    } catch (err) { console.error(err); }
+      if (dataCoins.length > 0) generateSmartAlerts(dataCoins, dataNews);
+    } catch (err) { console.error("Fetch Error:", err); }
     setLoading(false);
+  };
+
+  const generateSmartAlerts = (cData, nData) => {
+    const readAlerts = JSON.parse(localStorage.getItem('radarx_read_alerts') || '[]');
+    let newAlerts =[];
+    const favs = cData.filter(c => watchlist.includes(c.id));
+    favs.forEach(c => {
+      const change = c.price_change_percentage_24h;
+      if(change > 5) newAlerts.push({ id: `up_${c.id}_${change.toFixed(1)}`, type: 'bull', title: `${c.name} يطير عالياً! 🚀`, desc: `ارتفعت بنسبة ${change.toLocaleString('en-US', {maximumFractionDigits:2})}% اليوم.`, time: 'الآن' });
+      else if(change < -5) newAlerts.push({ id: `down_${c.id}_${change.toFixed(1)}`, type: 'bear', title: `${c.name} في هبوط 📉`, desc: `انخفضت بنسبة ${Math.abs(change).toLocaleString('en-US', {maximumFractionDigits:2})}% راقب الدعم.`, time: 'الآن' });
+    });
+    if(nData.length > 0) newAlerts.push({ id: `news_${nData[0].id}`, type: 'news', title: '📰 خبر عاجل', desc: nData[0].title, time: 'الآن' });
+    const unreadAlerts = newAlerts.filter(alert => !readAlerts.includes(alert.id));
+    setAlerts(unreadAlerts); setUnread(unreadAlerts.length);
+  };
+
+  const markAllAsRead = () => {
+    const readAlerts = JSON.parse(localStorage.getItem('radarx_read_alerts') || '[]');
+    const updatedReadAlerts =[...readAlerts, ...alerts.map(a => a.id)];
+    localStorage.setItem('radarx_read_alerts', JSON.stringify(updatedReadAlerts));
+    setAlerts([]); setUnread(0); setShowNotifs(false);
   };const toggleWatchlist = (e, coinId) => {
     e.stopPropagation();
     let updated = watchlist.includes(coinId) ? watchlist.filter(id => id !== coinId) :[...watchlist, coinId];
@@ -227,7 +246,38 @@ export default function App() {
           <Radar size={28} color="#39FF14" />
           <h2 style={{ margin: 0, fontWeight: 900 }}>{t.title}</h2>
         </div>
-        <LogOut size={24} color="#ef4444" cursor="pointer" onClick={() => { localStorage.removeItem('radarx_logged_in'); setIsLoggedIn(false); }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div className="bell-container" onClick={() => setShowNotifs(!showNotifs)}>
+            {unread > 0 ? <BellRing size={24} color="#39FF14" style={{animation: 'pulse 2s infinite'}} /> : <Bell size={24} color="#f8fafc" />}
+            {unread > 0 && <div className="badge">{unread.toLocaleString('en-US')}</div>}
+          </div>
+          <LogOut size={24} color="#ef4444" cursor="pointer" onClick={() => { localStorage.removeItem('radarx_logged_in'); setIsLoggedIn(false); }} />
+        </div>
+
+        {showNotifs && (
+          <div className="notification-panel" style={{ textAlign: isAr ? 'right' : 'left' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: 16 }}>{t.notifications}</h3>
+              {alerts.length > 0 && <span style={{ color: '#39FF14', fontSize: 12, cursor: 'pointer' }} onClick={markAllAsRead}>{t.markRead}</span>}
+            </div>
+            {alerts.length === 0 ? (
+              <p style={{ color: '#64748b', textAlign: 'center', fontSize: 14 }}>{t.noNotifs}</p>
+            ) : (
+              alerts.map(alert => (
+                <div key={alert.id} className="notif-item">
+                  <div className="notif-icon">
+                    {alert.type === 'bull' ? <TrendingUp size={18} color="#10b981"/> : alert.type === 'bear' ? <TrendingDown size={18} color="#ef4444"/> : <Newspaper size={18} color="#6366f1"/>}
+                  </div>
+                  <div>
+                    <p className="notif-title">{alert.title}</p>
+                    <p className="notif-desc">{alert.desc}</p>
+                    <span className="notif-time">{alert.time}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       <div className="tabs">
@@ -252,6 +302,15 @@ export default function App() {
         </div>
       )}
 
+      {activeTab !== 'news' && (
+        <div style={{ padding: '0 16px 16px 16px', marginTop: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, padding: '0 15px' }}>
+            <Search size={20} color="#64748b" />
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.search} style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '15px 10px', outline: 'none', textAlign: isAr ? 'right' : 'left', fontFamily: 'Tajawal' }} />
+          </div>
+        </div>
+      )}
+
       <div className="content-area">
         {loading ? (
           <div style={{ textAlign: 'center', color: '#39FF14', marginTop: 50, fontWeight: 'bold' }}>جاري المسح...</div>
@@ -260,7 +319,7 @@ export default function App() {
             <a key={n.id || i} href={n.url} target="_blank" rel="noreferrer" className="news-card">
               <img src={n.imageurl || DEFAULT_NEWS_IMAGE} alt="news" className="news-img" onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_NEWS_IMAGE; }} />
               <div className="news-content">
-                <h3 style={{ margin: '0 0 10px 0', fontSize: 16 }}>{n.title}</h3>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: 16, lineHeight: 1.5 }}>{n.title}</h3>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <p style={{ margin: 0, color: '#64748b', fontSize: 13, fontWeight: 'bold' }}>{n.source_info?.name}</p>
                   <span style={{ color: '#39FF14', fontSize: 12, fontWeight: 'bold' }}>{t.readMore} &rarr;</span>
@@ -271,7 +330,6 @@ export default function App() {
         ) : filteredCoins.map(coin => {
             const isFav = watchlist.includes(coin.id);
             const isPos = coin.price_change_percentage_24h > 0;
-            // دمج السعر اللحظي وألوان الوميض
             const livePrice = livePrices[coin.id]?.price || coin.current_price;
             const flashClass = livePrices[coin.id]?.dir === 'up' ? 'flash-up' : livePrices[coin.id]?.dir === 'down' ? 'flash-down' : '';
 
@@ -283,7 +341,6 @@ export default function App() {
                   <div style={{ color: '#64748b', fontSize: 13 }}>{coin.symbol.toUpperCase()}</div>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  {/* تطبيق لون الوميض على السعر */}
                   <div className={`price-container ${flashClass}`} style={{ fontWeight: 'bold', fontSize: 16, color: '#fff' }}>
                     ${livePrice.toLocaleString('en-US')}
                   </div>
@@ -300,10 +357,10 @@ export default function App() {
         })}
       </div>
 
-      {/* النافذة المنبثقة للشموع اليابانية */}
+      {/* النافذة المنبثقة للعملة (الشموع، الذكاء الاصطناعي، الإحالة) */}
       {selectedCoin && (
         <div className="modal-overlay" onClick={() => setSelectedCoin(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ paddingBottom: 40 }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img src={selectedCoin.image} alt="coin" style={{ width: 40, height: 40, borderRadius: 20 }} />
@@ -316,7 +373,6 @@ export default function App() {
               ${(livePrices[selectedCoin.id]?.price || selectedCoin.current_price).toLocaleString('en-US')}
             </h1>
             
-            {/* أزرار الإطارات الزمنية للشموع */}
             <div className="timeframe-container">
               <button className={`tf-btn ${timeframe === '1' ? 'active' : ''}`} onClick={() => setTimeframe('1')}>24H</button>
               <button className={`tf-btn ${timeframe === '7' ? 'active' : ''}`} onClick={() => setTimeframe('7')}>7D</button>
@@ -324,12 +380,10 @@ export default function App() {
               <button className={`tf-btn ${timeframe === '365' ? 'active' : ''}`} onClick={() => setTimeframe('365')}>1Y</button>
             </div>
 
-            {/* رسم الشموع اليابانية */}
             <div style={{ width: '100%', height: 250, marginBottom: 20 }}>
-              {chartLoading ? <div style={{ color: '#39FF14', textAlign: 'center', marginTop: 100 }}>جاري تحميل الشموع...</div> : <CandlestickChart data={chartData} />}
+              {chartLoading ? <div style={{ color: '#39FF14', textAlign: 'center', marginTop: 100 }}>جاري التحميل...</div> : <CandlestickChart data={chartData} />}
             </div>
 
-            {/* الذكاء الاصطناعي */}
             <div style={{ background: 'rgba(57, 255, 20, 0.05)', border: '1px solid rgba(57, 255, 20, 0.2)', padding: 20, borderRadius: 16 }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#39FF14', display: 'flex', alignItems: 'center', gap: 8, fontSize: 18 }}><Bot size={22} /> {t.aiAnalysis}</h3>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid #1e293b' }}>
@@ -350,9 +404,33 @@ export default function App() {
               </div>
             </div>
 
+            {/* ====== قسم الإحالة والربح (Affiliate Links) ====== */}
+            <div style={{ marginTop: 30, paddingBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 15 }}>
+                <span style={{ height: 1, background: '#1e293b', flex: 1 }}></span>
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: 13, fontWeight: 'bold' }}>
+                  {isAr ? 'نفذ هذه الصفقة واربح مكافأة 🎁' : 'Trade now & claim bonus 🎁'}
+                </p>
+                <span style={{ height: 1, background: '#1e293b', flex: 1 }}></span>
+              </div>
+              
+              <div className="affiliate-container">
+                <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=ar&ref=GRO_28502_E1G7E&utm_source=default" target="_blank" rel="noreferrer" className="aff-btn btn-binance">
+                  <img src="https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=029" alt="Binance" width="20" height="20" />
+                  Binance
+                </a>
+
+                <a href="https://www.bybit.com/invite?ref=OKPJ6Z" target="_blank" rel="noreferrer" className="aff-btn btn-bybit">
+                  <img src="https://cryptologos.cc/logos/bybit-bybit-logo.svg?v=035" alt="Bybit" width="20" height="20" />
+                  Bybit
+                </a>
+              </div>
+            </div>
+            {/* ============================================== */}
+
           </div>
         </div>
       )}
     </div>
   );
-                                                                                                }
+                                                                                                     }
