@@ -28,7 +28,6 @@ const fallbackNews =[
 ];
 const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80";
 
-// مكوّن الشموع اليابانية (Lightweight Charts)
 const CandlestickChart = ({ data }) => {
   const chartContainerRef = useRef();
   useEffect(() => {
@@ -55,22 +54,22 @@ export default function App() {
   const [coins, setCoins] = useState([]);
   const [filteredCoins, setFilteredCoins] = useState([]);
   const [news, setNews] = useState([]);
-  const[fng, setFng] = useState({ value: 50, class: 'Neutral' });
-  const[lang, setLang] = useState('ar');
+  const [fng, setFng] = useState({ value: 50, class: 'Neutral' });
+  const [lang, setLang] = useState('ar');
   const [searchQuery, setSearchQuery] = useState('');
   const[activeTab, setActiveTab] = useState('market');
   const [sortFilter, setSortFilter] = useState('all');
   const [watchlist, setWatchlist] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState(null);
   
-  const[showNotifs, setShowNotifs] = useState(false);
+  const [showNotifs, setShowNotifs] = useState(false);
   const [alerts, setAlerts] = useState([]);
-  const[unread, setUnread] = useState(0);
+  const [unread, setUnread] = useState(0);
 
   const [livePrices, setLivePrices] = useState({});
-  const[chartData, setChartData] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(false);
-  const [timeframe, setTimeframe] = useState('1'); 
+  const[timeframe, setTimeframe] = useState('1'); 
 
   const t = translations[lang];
   const isAr = lang === 'ar';
@@ -85,7 +84,6 @@ export default function App() {
     if (isLoggedIn) fetchData();
   },[isLoggedIn]);
 
-  // محرك الأسعار اللحظية WebSockets
   useEffect(() => {
     if (!isLoggedIn || coins.length === 0) return;
     const symbolMap = {};
@@ -155,7 +153,7 @@ export default function App() {
         fetch('https://api.alternative.me/fng/?limit=1')
       ]);
 
-      let dataCoins = [];
+      let dataCoins =[];
       let dataNews =[];
 
       if (resCoins.status === 'fulfilled') {
@@ -201,7 +199,9 @@ export default function App() {
     const updatedReadAlerts =[...readAlerts, ...alerts.map(a => a.id)];
     localStorage.setItem('radarx_read_alerts', JSON.stringify(updatedReadAlerts));
     setAlerts([]); setUnread(0); setShowNotifs(false);
-  };const toggleWatchlist = (e, coinId) => {
+  };
+
+  const toggleWatchlist = (e, coinId) => {
     e.stopPropagation();
     let updated = watchlist.includes(coinId) ? watchlist.filter(id => id !== coinId) :[...watchlist, coinId];
     setWatchlist(updated);
@@ -220,9 +220,7 @@ export default function App() {
   const getFngColor = (val) => {
     if(val <= 25) return '#ef4444'; if(val <= 45) return '#f59e0b';
     if(val <= 55) return '#eab308'; if(val <= 75) return '#84cc16'; return '#10b981';
-  };
-
-  if (!isLoggedIn) {
+  };if (!isLoggedIn) {
     return (
       <div className="login-container" style={{ direction: dir, background: '#020617' }}>
         <div className="login-card" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
@@ -357,7 +355,6 @@ export default function App() {
         })}
       </div>
 
-      {/* النافذة المنبثقة للعملة (الشموع، الذكاء الاصطناعي، الإحالة) */}
       {selectedCoin && (
         <div className="modal-overlay" onClick={() => setSelectedCoin(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -369,10 +366,37 @@ export default function App() {
               <XCircle size={30} color="#64748b" cursor="pointer" onClick={() => setSelectedCoin(null)} />
             </div>
             
-            <h1 className={livePrices[selectedCoin.id]?.dir === 'up' ? 'flash-up' : livePrices[selectedCoin.id]?.dir === 'down' ? 'flash-down' : ''} style={{ margin: '0 0 20px 0', fontSize: 36 }}>
+            <h1 className={livePrices[selectedCoin.id]?.dir === 'up' ? 'flash-up' : livePrices[selectedCoin.id]?.dir === 'down' ? 'flash-down' : ''} style={{ margin: '0 0 15px 0', fontSize: 36 }}>
               ${(livePrices[selectedCoin.id]?.price || selectedCoin.current_price).toLocaleString('en-US')}
             </h1>
-            
+
+            {/* أزرار الإحالة (تم رفعها واستخدام أكواد SVG النظيفة لحل تكسر الصور) */}
+            <div style={{ marginBottom: 25 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 10 }}>
+                <span style={{ height: 1, background: '#1e293b', flex: 1 }}></span>
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: 13, fontWeight: 'bold' }}>
+                  {isAr ? 'نفذ هذه الصفقة واربح مكافأة 🎁' : 'Trade now & claim bonus 🎁'}
+                </p>
+                <span style={{ height: 1, background: '#1e293b', flex: 1 }}></span>
+              </div>
+              
+              <div className="affiliate-container">
+                <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=ar&ref=GRO_28502_E1G7E&utm_source=default" target="_top" className="aff-btn btn-binance">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <path d="M11.996 16.033l-3.23-3.23-2.02 2.018 5.25 5.25 5.25-5.25-2.018-2.018-3.232 3.23zM11.998 7.965l3.23 3.23 2.02-2.018-5.25-5.25-5.25 5.25 2.018 2.018 3.232-3.23zm-5.25 2.017l-2.018 2.018 2.018 2.018 2.018-2.018-2.018-2.018zm10.5 0l-2.018 2.018 2.018 2.018 2.018-2.018-2.018-2.018z"/>
+                  </svg>
+                  Binance
+                </a>
+
+                <a href="https://www.bybit.com/invite?ref=OKPJ6Z" target="_top" className="aff-btn btn-bybit">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 3.6c4.632 0 8.4 3.768 8.4 8.4s-3.768 8.4-8.4 8.4-8.4-3.768-8.4-8.4 3.768-8.4 8.4-8.4zm-1.63 5.2l4.54 2.2v2.7l-4.54 2.2v-2.7l2.57-1.25v-1.6l-2.57-1.25v-1.6zM11.85 10l-2.57 1.25v1.6l2.57-1.25V10z"/>
+                  </svg>
+                  Bybit
+                </a>
+              </div>
+            </div>
+
             <div className="timeframe-container">
               <button className={`tf-btn ${timeframe === '1' ? 'active' : ''}`} onClick={() => setTimeframe('1')}>24H</button>
               <button className={`tf-btn ${timeframe === '7' ? 'active' : ''}`} onClick={() => setTimeframe('7')}>7D</button>
@@ -404,33 +428,9 @@ export default function App() {
               </div>
             </div>
 
-            {/* ====== قسم الإحالة والربح (Affiliate Links) ====== */}
-            <div style={{ marginTop: 30, paddingBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 15 }}>
-                <span style={{ height: 1, background: '#1e293b', flex: 1 }}></span>
-                <p style={{ margin: 0, color: '#94a3b8', fontSize: 13, fontWeight: 'bold' }}>
-                  {isAr ? 'نفذ هذه الصفقة واربح مكافأة 🎁' : 'Trade now & claim bonus 🎁'}
-                </p>
-                <span style={{ height: 1, background: '#1e293b', flex: 1 }}></span>
-              </div>
-              
-              <div className="affiliate-container">
-                <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=ar&ref=GRO_28502_E1G7E&utm_source=default" target="_blank" rel="noreferrer" className="aff-btn btn-binance">
-                  <img src="https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=029" alt="Binance" width="20" height="20" />
-                  Binance
-                </a>
-
-                <a href="https://www.bybit.com/invite?ref=OKPJ6Z" target="_blank" rel="noreferrer" className="aff-btn btn-bybit">
-                  <img src="https://cryptologos.cc/logos/bybit-bybit-logo.svg?v=035" alt="Bybit" width="20" height="20" />
-                  Bybit
-                </a>
-              </div>
-            </div>
-            {/* ============================================== */}
-
           </div>
         </div>
       )}
     </div>
   );
-                                                                                                     }
+                }
