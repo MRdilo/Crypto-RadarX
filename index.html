@@ -1,24 +1,19 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     
-    <!-- أيقونة المتصفح -->
+    <!-- الأيقونات وملف التثبيت PWA -->
     <link rel="icon" type="image/png" href="/logo.png" />
-    
-    <!-- أيقونة هواتف الآيفون (مهمة جداً للـ PWA على نظام iOS) -->
     <link rel="apple-touch-icon" href="/logo.png" />
-    
-    <!-- ملف الـ Manifest للتثبيت -->
     <link rel="manifest" href="/manifest.json" />
     
-    <!-- جعل التطبيق يبدو كـ Native App (منع التقريب العشوائي في الهاتف) -->
+    <!-- إعدادات الشاشة والألوان -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#020617" />
-    
     <title>Crypto RadarX</title>
 
-    <!-- OneSignal Push Notifications -->
+    <!-- كود إشعارات OneSignal (كامل وغير مقطوع) -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred ||
