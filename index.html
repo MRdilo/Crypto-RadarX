@@ -11,9 +11,41 @@
     <!-- إعدادات الشاشة والألوان -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#020617" />
+
     <title>Crypto RadarX</title>
 
-    <!-- كود إشعارات OneSignal (كامل وغير مقطوع) -->
+    <!-- OneSignal Push Notifications -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
-      window.OneSignalDeferred = window.OneSignalDeferred ||
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "09316cd5-4f8f-4d66-bce9-7092c8d8f53b",
+          notifyButton: {
+            enable: true
+          }
+        });
+      });
+    </script>
+
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <!-- تشغيل React -->
+    <script type="module" src="/main.jsx"></script>
+
+    <!-- تسجيل Service Worker (مهم جدًا لـ PWA) -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/service-worker.js")
+            .then(() => console.log("✅ Service Worker Registered"))
+            .catch(err => console.log("❌ Service Worker Error:", err));
+        });
+      }
+    </script>
+
+  </body>
+</html>
