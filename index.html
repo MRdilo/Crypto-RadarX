@@ -8,44 +8,26 @@
     <link rel="apple-touch-icon" href="/logo.png" />
     <link rel="manifest" href="/manifest.json" />
     
-    <!-- إعدادات الشاشة والألوان -->
+    <!-- إعدادات الشاشة -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- 🟢 تلوين الشريط العلوي (Status Bar) للأندرويد ومتصفحات الهاتف -->
     <meta name="theme-color" content="#020617" />
+
+    <!-- 🟢 إعدادات PWA وشريط الحالة لأجهزة الآيفون (iOS) -->
+    <!-- هذا السطر يجعل التطبيق يعمل بملء الشاشة في الآيفون -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- هذا السطر يجعل شريط البطارية والإشعارات شفافاً ليأخذ لون خلفية التطبيق -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- اسم التطبيق عند حفظه في الآيفون -->
+    <meta name="apple-mobile-web-app-title" content="RadarX" />
+    
+    <!-- 🟢 شاشة البداية (Splash Screen) لأجهزة الآيفون -->
+    <link rel="apple-touch-startup-image" href="/logo.png" />
 
     <title>Crypto RadarX</title>
 
     <!-- OneSignal Push Notifications -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "09316cd5-4f8f-4d66-bce9-7092c8d8f53b",
-          notifyButton: {
-            enable: true
-          }
-        });
-      });
-    </script>
-
-  </head>
-
-  <body>
-    <div id="root"></div>
-
-    <!-- تشغيل React -->
-    <script type="module" src="/main.jsx"></script>
-
-    <!-- تسجيل Service Worker (مهم جدًا لـ PWA) -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/service-worker.js")
-            .then(() => console.log("✅ Service Worker Registered"))
-            .catch(err => console.log("❌ Service Worker Error:", err));
-        });
-      }
-    </script>
-
-  </body>
-</html>
+      window.OneSignalDeferred = window.OneSignalDeferred ||
